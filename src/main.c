@@ -5,7 +5,7 @@
 #endif
 
 static const char *BUTTON_STRING[] = {
-    "unknown",
+    "unknown (unused)",
     "left face up",
     "left face right",
     "left face down",
@@ -19,16 +19,17 @@ static const char *BUTTON_STRING[] = {
     "right trig 1",
     "right trig 2",
     "mid left",
-    "mid",
+    "mid (unused)",
     "mid right",
     "left thumb",
     "right thumb",
 };
 
-static const int screenWidth = 450;
-static const int screenHeight = 450;
+static const int screenWidth = 800;
+static const int screenHeight = 600;
 
 static int framesCounter = 0;
+static Texture2D TestTex;
 
 static void InitGame(void);        // Initialize game
 static void UpdateGame(void);      // Update game (one frame)
@@ -58,6 +59,11 @@ int main(void)
 void InitGame(void)
 {
     framesCounter = 0;
+
+    Image testImage = LoadImage("resources/images/fire.png");
+    ImageResize(&testImage, screenWidth, screenHeight);
+    TestTex = LoadTextureFromImage(testImage);
+    UnloadImage(testImage);
 }
 
 void UpdateGame(void)
@@ -71,15 +77,24 @@ void DrawGame(void)
     ClearBackground(RAYWHITE);
     if (IsGamepadAvailable(0))
     {
-        for (int i = 0; i <= 17; i++)
+        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1))
         {
-            DrawText(BUTTON_STRING[i], 10, i * 20, 20, IsGamepadButtonDown(0, i) ? RED : BLACK);
-        }
+            DrawCircle(screenWidth / 2, screenHeight / 2, 100, RED);
 
-        DrawCircle(250 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) * 20),
-                   150 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) * 20), 25, BLACK);
-        DrawCircle(350 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * 20),
-                   150 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * 20), 25, BLACK);
+            // for (int i = 0; i <= 17; i++)
+            // {
+            //     DrawText(BUTTON_STRING[i], 10, i * 20, 20, IsGamepadButtonDown(0, i) ? RED : BLACK);
+            // }
+
+            DrawCircle(50 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) * 20),
+                       screenHeight / 2 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) * 20), 25, BLACK);
+            DrawCircle(screenWidth - 50 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * 20),
+                       screenHeight / 2 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * 20), 25, BLACK);
+        }
+        else
+        {
+            DrawTexture(TestTex, 0, 0, WHITE);
+        }
     }
     else
     {
@@ -90,6 +105,7 @@ void DrawGame(void)
 
 void UnloadGame(void)
 {
+    UnloadTexture(TestTex);
 }
 
 void UpdateDrawFrame(void)
