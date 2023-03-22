@@ -38,11 +38,19 @@ outputPath = os.path.join(args['output'], 'game.html')
 
 # Build WASM
 raylibSrcDir = 'C:/raylib/raylib/src'
-compilerArgs = "-Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result -Os -I. -I {0} -I {0}/external -L. -L {0} -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 --shell-file ./src/shell.html {0}/web/libraylib.a -DPLATFORM_WEB -s EXPORTED_FUNCTIONS=[\"_free\",\"_malloc\",\"_main\"] -s EXPORTED_RUNTIME_METHODS=ccall".format(
+compilerArgs = "-Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result -Os -I. -I {0} -I {0}/external -L. -L {0} -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 -s ALLOW_MEMORY_GROWTH=1 -s FORCE_FILESYSTEM=1 --shell-file ./src/shell.html {0}/web/libraylib.a -DPLATFORM_WEB -s EXPORTED_FUNCTIONS=[\"_free\",\"_malloc\",\"_main\"] -s EXPORTED_RUNTIME_METHODS=ccall".format(
     raylibSrcDir)
-build_cmd = "emcc -o {} {} {}".format(outputPath, inputPath, compilerArgs)
+build_cmd = "emcc {} -o {} {}".format(inputPath, outputPath, compilerArgs)
+# Pack resources
+resDir = os.path.join('src', 'resources')
+for subdir, dirs, files in os.walk(resDir):
+    for file in files:
+        resPath = os.path.join(subdir, file)
+        resString = " --preload-file {}@{}".format(
+            resPath, resPath .replace('src', ''))
+        print(resString)
+        build_cmd += resString
 os.system(build_cmd)
-
 
 # Change name and color in .html
 with open(outputPath, 'r') as f:
