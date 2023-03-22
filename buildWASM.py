@@ -47,7 +47,7 @@ for subdir, dirs, files in os.walk(resDir):
     for file in files:
         resPath = os.path.join(subdir, file)
         resString = " --preload-file {}@{}".format(
-            resPath, resPath .replace('src', ''))
+            resPath, resPath.replace('src', ''))
         print(resString)
         build_cmd += resString
 os.system(build_cmd)
