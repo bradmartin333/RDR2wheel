@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "raylib.h"
+#include <math.h>
+#include <raylib.h>
 
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
@@ -15,7 +16,7 @@ static const Vector2 center = {screenWidth / 2, screenHeight / 2};
 // Wheel
 static int numWheelOptions = 8;
 static const int wheelRadius = 225;
-static const Vector2 ringCenter = {screenWidth / 2, screenHeight / 2 + 50};
+static const Vector2 wheelCenter = {screenWidth / 2, screenHeight / 2 + 50};
 
 // Wheel header
 static const Rectangle wheelHeader = {screenWidth / 2 - 150, 25, 300, 75};
@@ -32,10 +33,9 @@ static void DrawGame(void);        // Draw game (one frame)
 static void UnloadGame(void);      // Unload game
 static void UpdateDrawFrame(void); // Update and Draw (one frame)
 static void DrawHeader(void);
-static void DrawButton(const char *text, int posX, int posY, int button);
+static void DrawButton(const char *text, int posX, int posY, int button, int fontSize);
 static int ApplyButton(int button);
-static void DrawCompleteRing(void);
-static void DrawRingBackground(float angle);
+static void DrawWheel(void);
 
 int main(void)
 {
@@ -85,7 +85,7 @@ void DrawGame(void)
         {
             DrawTexture(GrayscaleTestTex, 0, 0, WHITE);
             DrawHeader();
-            DrawCompleteRing();
+            DrawWheel();
         }
         else
         {
@@ -112,8 +112,8 @@ void UpdateDrawFrame(void)
 
 void DrawHeader(void)
 {
-    DrawRectangleRec(wheelHeader, Fade(BLACK, 0.8f));
-    DrawButton("RB", (int)center.x, 38, GAMEPAD_BUTTON_RIGHT_TRIGGER_1);
+    DrawRectangleRounded(wheelHeader, 0.2, 10, Fade(BLACK, 0.8f));
+    DrawButton("RB", (int)center.x, 38, GAMEPAD_BUTTON_RIGHT_TRIGGER_1, 16);
 
     // Determine the width of all the header options together
     int fontSize = 20;
@@ -133,10 +133,10 @@ void DrawHeader(void)
     }
 }
 
-void DrawButton(const char *text, int posX, int posY, int button)
+void DrawButton(const char *text, int posX, int posY, int button, int fontSize)
 {
-    bool buttonPressed = ApplyButton(button) == 1;
-    int fontSize = buttonPressed ? 20 : 16;
+    if (ApplyButton(button) == 1)
+        fontSize += 4;
     int txtWid = MeasureText(text, fontSize);
     int txtPos = posX - txtWid / 2;
     DrawRectangleRounded((Rectangle){txtPos - 5, posY - 5, txtWid + 10, fontSize + 10}, 0.2, 10, WHITE);
@@ -160,12 +160,14 @@ int ApplyButton(int button)
     return buttonPressed ? 1 : 0;
 }
 
-void DrawCompleteRing(void)
+void DrawWheel(void)
 {
+    DrawCircleV(wheelCenter, wheelRadius * 0.57, Fade(BLACK, 0.5f));
+
     // Determine if the rightStickWheel vector is greater than the ring radius * 0.9
     Vector2 rightStick = (Vector2){GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X), GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)};
-    Vector2 rightStickWheel = (Vector2){ringCenter.x + rightStick.x * wheelRadius, ringCenter.y + rightStick.y * wheelRadius};
-    float rightStickWheelMag = sqrt(pow(rightStickWheel.x - ringCenter.x, 2) + pow(rightStickWheel.y - ringCenter.y, 2));
+    Vector2 rightStickWheel = (Vector2){wheelCenter.x + rightStick.x * wheelRadius, wheelCenter.y + rightStick.y * wheelRadius};
+    float rightStickWheelMag = sqrt(pow(rightStickWheel.x - wheelCenter.x, 2) + pow(rightStickWheel.y - wheelCenter.y, 2));
     float angle = 999.0;
     if (rightStickWheelMag > wheelRadius * 0.9)
     {
@@ -176,24 +178,66 @@ void DrawCompleteRing(void)
             angle += 360;
         angle = abs(360 - angle);
     }
-    DrawRingBackground(angle);
-}
 
-void DrawRingBackground(float angle)
-{
     float segmentAngleSpan = 360.0 / numWheelOptions;
     float halfUsedAngleSpan = (segmentAngleSpan - 2.0) / 2.0;
+
+    int buttonCenter = 0;
+    float buttonInner = 0;
+    float buttonOuter = 0;
+    float buttonStartAngle = 0;
+    float buttonEndAngle = 0;
+
     for (int i = 0; i < numWheelOptions; i++)
     {
         float startAngle = i * segmentAngleSpan - halfUsedAngleSpan;
         float endAngle = i * segmentAngleSpan + halfUsedAngleSpan;
-        // Determine if the angle points towards the ring segement being drawn
-        bool selected = angle >= startAngle && angle <= endAngle;
-        // Solve edge case crossing into quadrant 3 from quadrant 4
-        if (i == 0 && angle > 360.0 - halfUsedAngleSpan && angle <= 360.0)
-            selected = true;
-        Color c = selected ? Fade(MAROON, 0.8f) : Fade(BLACK, 0.8f);
-        DrawRing(ringCenter, wheelRadius * 0.6, wheelRadius, startAngle, endAngle, 100, c);
+        DrawRing(wheelCenter, wheelRadius * 0.6, wheelRadius, startAngle, endAngle, 100, Fade(BLACK, 0.8f));
+        // Determine if the angle points towards the ring segement being drawn and
+        // solve edge case crossing into quadrant 3 from quadrant 4
+        if ((angle >= startAngle && angle <= endAngle) || (i == 0 && angle > 360.0 - halfUsedAngleSpan && angle <= 360.0))
+        {
+            DrawRing(wheelCenter, wheelRadius * 0.95, wheelRadius, startAngle, endAngle, 100, Fade(MAROON, 0.8f));
+
+            float midAngle = (startAngle + endAngle - 180.0f) / 2.0;
+            // Get the Vector2 of the middle of the inner arc of the ring segment
+            Vector2 midPoint = (Vector2){wheelCenter.x + cos(midAngle * PI / 180.0) * wheelRadius * 0.6,
+                                         wheelCenter.y + sin(midAngle * PI / 180.0) * wheelRadius * 0.6};
+            // Get the Vector2 of the middle of the outer arc of the ring segment
+            Vector2 midPointOuter = (Vector2){wheelCenter.x + cos(midAngle * PI / 180.0) * wheelRadius,
+                                              wheelCenter.y + sin(midAngle * PI / 180.0) * wheelRadius};
+            // Reflect the vectors about the x axis
+            midPoint.y = wheelCenter.y - (midPoint.y - wheelCenter.y);
+            midPointOuter.y = wheelCenter.y - (midPointOuter.y - wheelCenter.y);
+            // Get midpoint between the points
+            Vector2 segmentCenter = (Vector2){(midPoint.x + midPointOuter.x) / 2.0, (midPoint.y + midPointOuter.y) / 2.0};
+            // Find the intersection of the line in the logical place for the LT/RT buttons
+            buttonCenter = (int)segmentCenter.y;
+            buttonInner = sqrt(-pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2) + pow(wheelRadius * 0.625, 2));
+            buttonOuter = sqrt(-pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2) + pow(wheelRadius, 2));
+            buttonStartAngle = startAngle;
+            buttonEndAngle = endAngle;
+        }
     }
-    DrawCircleV(ringCenter, wheelRadius * 0.57, Fade(BLACK, 0.5f));
+    if (buttonCenter != 0) // Variables pushed out here so they are drawn on the top layer
+    {
+        if (isnan(buttonInner))
+        {
+            double r = wheelRadius * 0.8;
+            DrawButton("LT", (int)(r * cos((buttonStartAngle + 90.0) * PI / 180.0) + wheelCenter.x),
+                       (int)(r * sin((buttonStartAngle + 90.0) * PI / 180.0) + wheelCenter.y), GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
+            DrawButton("RT", (int)(r * cos((buttonEndAngle + 90.0) * PI / 180.0) + wheelCenter.x),
+                       (int)(r * sin((buttonEndAngle + 90.0) * PI / 180.0) + wheelCenter.y), GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
+        }
+        else if (angle >= 0 && angle <= 180)
+        {
+            DrawButton("LT", (int)(wheelCenter.x + buttonInner), buttonCenter, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
+            DrawButton("RT", (int)(wheelCenter.x + buttonOuter), buttonCenter, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
+        }
+        else
+        {
+            DrawButton("LT", (int)(wheelCenter.x - buttonOuter), buttonCenter, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
+            DrawButton("RT", (int)(wheelCenter.x - buttonInner), buttonCenter, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
+        }
+    }
 }
