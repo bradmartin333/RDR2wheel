@@ -12,10 +12,12 @@ static const int screenWidth = 800;
 static const int screenHeight = 600;
 static const Vector2 center = {screenWidth / 2, screenHeight / 2};
 
-// Wheel variables
+// Wheel
+static int numWheelOptions = 8;
 static const int wheelRadius = 225;
 static const Vector2 ringCenter = {screenWidth / 2, screenHeight / 2 + 50};
-// Header
+
+// Wheel header
 static const Rectangle wheelHeader = {screenWidth / 2 - 150, 25, 300, 75};
 static const char *headerOptions[NUM_HEADER_OPTIONS] = {"Camera", "Processing", "Tools"};
 static int headerSelection = 1;
@@ -32,7 +34,8 @@ static void UpdateDrawFrame(void); // Update and Draw (one frame)
 static void DrawHeader(void);
 static void DrawButton(const char *text, int posX, int posY, int button);
 static int ApplyButton(int button);
-static void DrawRingBackground(void);
+static void DrawCompleteRing(void);
+static void DrawRingBackground(float angle);
 
 int main(void)
 {
@@ -57,6 +60,7 @@ void InitGame(void)
 {
     framesCounter = 0;
 
+    // Generate the test textures
     Image testImage = LoadImage("resources/images/fire.png");
     Image testGrayscaleImage = ImageCopy(testImage);
     ImageColorGrayscale(&testGrayscaleImage);
@@ -81,13 +85,7 @@ void DrawGame(void)
         {
             DrawTexture(GrayscaleTestTex, 0, 0, WHITE);
             DrawHeader();
-            DrawRingBackground();
-
-            // Testing
-            DrawCircle(50 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) * 20),
-                       center.y + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) * 20), 25, BLACK);
-            DrawCircle(screenWidth - 50 + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X) * 20),
-                       center.y + (int)(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y) * 20), 25, BLACK);
+            DrawCompleteRing();
         }
         else
         {
@@ -162,11 +160,40 @@ int ApplyButton(int button)
     return buttonPressed ? 1 : 0;
 }
 
-void DrawRingBackground(void)
+void DrawCompleteRing(void)
 {
-    for (int i = 0; i < 8; i++)
+    // Determine if the rightStickWheel vector is greater than the ring radius * 0.9
+    Vector2 rightStick = (Vector2){GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X), GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)};
+    Vector2 rightStickWheel = (Vector2){ringCenter.x + rightStick.x * wheelRadius, ringCenter.y + rightStick.y * wheelRadius};
+    float rightStickWheelMag = sqrt(pow(rightStickWheel.x - ringCenter.x, 2) + pow(rightStickWheel.y - ringCenter.y, 2));
+    float angle = 999.0;
+    if (rightStickWheelMag > wheelRadius * 0.9)
     {
-        DrawRing(ringCenter, wheelRadius * 0.6, wheelRadius, i * 45 - 21.5, i * 45 + 21.5, 100, Fade(BLACK, 0.8f));
+        // Get the angle of the right stick vector with straight down as 0 degrees
+        // and stright right as 90 degrees
+        angle = atan2(rightStick.y, rightStick.x) * 180 / PI - 90;
+        if (angle < 0)
+            angle += 360;
+        angle = abs(360 - angle);
+    }
+    DrawRingBackground(angle);
+}
+
+void DrawRingBackground(float angle)
+{
+    float segmentAngleSpan = 360.0 / numWheelOptions;
+    float halfUsedAngleSpan = (segmentAngleSpan - 2.0) / 2.0;
+    for (int i = 0; i < numWheelOptions; i++)
+    {
+        float startAngle = i * segmentAngleSpan - halfUsedAngleSpan;
+        float endAngle = i * segmentAngleSpan + halfUsedAngleSpan;
+        // Determine if the angle points towards the ring segement being drawn
+        bool selected = angle >= startAngle && angle <= endAngle;
+        // Solve edge case crossing into quadrant 3 from quadrant 4
+        if (i == 0 && angle > 360.0 - halfUsedAngleSpan && angle <= 360.0)
+            selected = true;
+        Color c = selected ? Fade(MAROON, 0.8f) : Fade(BLACK, 0.8f);
+        DrawRing(ringCenter, wheelRadius * 0.6, wheelRadius, startAngle, endAngle, 100, c);
     }
     DrawCircleV(ringCenter, wheelRadius * 0.57, Fade(BLACK, 0.5f));
 }
