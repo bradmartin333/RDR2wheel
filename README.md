@@ -8,8 +8,8 @@ The goal here is to create a user-friendly template to add the selector wheel to
 
 There are great tutorials for getting setup with Raylib and emscripten
 
-- [Raylib on Windows](youtu.be/-F6THkPkF2I)
-- [enscripten on Windows](youtu.be/j6akryezlzc)
+- [Raylib on Windows](https://www.youtube.com/watch?v=-F6THkPkF2I)
+- [emscripten on Windows](https://www.youtube.com/watch?v=j6akryezlzc)
 
 ## Usage/Examples
 
