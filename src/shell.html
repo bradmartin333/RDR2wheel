@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="EN-us">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Game</title>
+
+    <style>
+        body {
+            font-family: arial;
+            margin: 0;
+            padding: none;
+        }
+
+        .emscripten_border {
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .emscripten {
+            width: min(100vw, 100vh);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="emscripten_border">
+        <canvas class="emscripten" id="canvas"></canvas>
+    </div>
+    <script type='text/javascript'
+        src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
+    <script type='text/javascript'>
+        function saveFileFromMEMFSToDisk(memoryFSname, localFSname)     // This can be called by C/C++ code
+        {
+            var isSafari = false;
+            var data = FS.readFile(memoryFSname);
+            var blob;
+            if (isSafari) blob = new Blob([data.buffer], { type: "application/octet-stream" });
+            else blob = new Blob([data.buffer], { type: "application/octet-binary" });
+            saveAs(blob, localFSname);
+        }
+    </script>
+    <script type='text/javascript'>
+        var Module = {
+            canvas: (function () {
+                var canvas = document.querySelector('#canvas');
+                canvas.addEventListener("webglcontextlost", function (e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+                return canvas;
+            })()
+        };
+    </script>
+    {{{ SCRIPT }}}
+</body>
+
+</html>
