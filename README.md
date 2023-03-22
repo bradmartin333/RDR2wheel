@@ -4,6 +4,8 @@ The Red Dead Redeption 2 wheel HUD is a great way to replace typical mouse and k
 
 ![RDR2](https://miro.medium.com/v2/resize:fit:640/format:webp/1*KObw_YewVr50ABFDDv7srA.jpeg)
 
+https://user-images.githubusercontent.com/19335151/227017637-54b77663-a17a-4761-8ad2-ca471a2f6779.mp4
+
 ## Installation
 
 There are great tutorials for getting setup with Raylib and emscripten
