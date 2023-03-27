@@ -5,7 +5,7 @@
 
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_CUSTOM_ICONS
-#include "iconset.h"
+#include "./resources/images/iconset.h"
 #include "raygui.h"
 
 #if defined(PLATFORM_WEB)
