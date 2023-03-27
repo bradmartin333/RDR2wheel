@@ -18,6 +18,7 @@ static const Vector2 center = {screenWidth / 2, screenHeight / 2};
 static int framesCounter = 0;
 static Texture2D TestTex;
 static Texture2D GrayscaleTestTex;
+static Music music;
 
 // Wheel header
 static const Rectangle wheelHeader = {screenWidth / 2 - 150, 25, 300, 75};
@@ -27,7 +28,7 @@ static int headerSelection = 1;
 // Wheel
 static const int wheelRadius = 225;
 static const Vector2 wheelCenter = {screenWidth / 2, screenHeight / 2 + 50};
-static int wheelSelection = 0;
+static int wheelSelection = NULL_VAL;
 static float segmentAngleSpan;
 static float halfUsedAngleSpan;
 static float startAngles[NUM_WHEEL_OPTIONS];
@@ -43,13 +44,27 @@ static void DrawButton(const char *text, int posX, int posY, int button, int fon
 static int ApplyButton(int button);
 static void DrawWheel(void);
 static void DrawWheelSelection(void);
-static __attribute__((unused)) char *IntToString(int);
-static __attribute__((unused)) char *FloatToString(float);
+
+char *IntToString(int num)
+{
+    char *str = (char *)malloc(10 * sizeof(char));
+    sprintf(str, "%d", num);
+    return str;
+}
+
+char *FloatToString(float num)
+{
+    char *str = (char *)malloc(10 * sizeof(char));
+    sprintf(str, "%f", num);
+    return str;
+}
 
 int main(void)
 {
     InitWindow(screenWidth, screenHeight, "RDR2 Wheel");
     InitGame();
+    InitAudioDevice();
+    music = LoadMusicStream("resources/sounds/western.mp3");
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
@@ -99,6 +114,11 @@ void DrawGame(void)
     ClearBackground(RAYWHITE);
     if (IsGamepadAvailable(0))
     {
+        if (!IsMusicStreamPlaying(music))
+            PlayMusicStream(music);
+        else
+            UpdateMusicStream(music);
+
         if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1))
         {
             DrawTexture(GrayscaleTestTex, 0, 0, WHITE);
@@ -110,7 +130,6 @@ void DrawGame(void)
         else
         {
             DrawTexture(TestTex, 0, 0, WHITE);
-            wheelSelection = NULL_VAL;
         }
     }
     else
@@ -123,6 +142,8 @@ void DrawGame(void)
 void UnloadGame(void)
 {
     UnloadTexture(TestTex);
+    UnloadMusicStream(music);
+    CloseAudioDevice();
 }
 
 void UpdateDrawFrame(void)
@@ -228,7 +249,7 @@ void DrawWheel(void)
         // Determine if the angle points towards the ring segement being drawn and
         // solve edge case of crossing quadrant 1,2 -> quadrant 3,4
         if ((endAngle > angle && angle > startAngle) ||
-            (startAngle + endAngle + 1e-3 > 2 * PI && rightStick.y > 0))
+            (wheelSelection == NUM_WHEEL_OPTIONS / 2 && endAngle > angle && angle < startAngle && rightStick.y > 0))
             wheelSelection = NULL_VAL;
     }
 
@@ -242,26 +263,18 @@ void DrawWheel(void)
 void DrawWheelSelection(void)
 {
     // Determine the start and end angles of the ring segment and draw it
-    float startAngle = wheelSelection * segmentAngleSpan - halfUsedAngleSpan;
-    float endAngle = wheelSelection * segmentAngleSpan + halfUsedAngleSpan;
+    float startAngle = startAngles[wheelSelection];
+    float endAngle = endAngles[wheelSelection];
+    float midAngle = (1 / 360.0) * PI * (startAngle + endAngle - 180.0);
     DrawRing(wheelCenter, wheelRadius * 0.95, wheelRadius, startAngle, endAngle, 100, Fade(MAROON, 0.8f));
-
-    float midAngle = ((startAngle + endAngle - 180.0f) / 2.0) * PI / 180.0;
-    // Get the Vector2 of the middle of the inner arc of the ring segment
-    Vector2 midPoint = (Vector2){wheelCenter.x + cos(midAngle) * wheelRadius * 0.6,
-                                 wheelCenter.y + sin(midAngle) * wheelRadius * 0.6};
-    // Get the Vector2 of the middle of the outer arc of the ring segment
-    Vector2 midPointOuter = (Vector2){wheelCenter.x + cos(midAngle) * wheelRadius,
-                                      wheelCenter.y + sin(midAngle) * wheelRadius};
-    // Reflect the vectors about the x axis
-    midPoint.y = wheelCenter.y - (midPoint.y - wheelCenter.y);
-    midPointOuter.y = wheelCenter.y - (midPointOuter.y - wheelCenter.y);
-    // Get midpoint between the points
-    Vector2 segmentCenter = (Vector2){(midPoint.x + midPointOuter.x) / 2.0, (midPoint.y + midPointOuter.y) / 2.0};
+    Vector2 segmentCenter = (Vector2){wheelCenter.x + cos(midAngle) * wheelRadius * 0.8,
+                                      wheelCenter.y - sin(midAngle) * wheelRadius * 0.8};
+    DrawCircleV(segmentCenter, 10, Fade(MAROON, 0.8f));
     // Find the intersection of the line in the logical place for the LT/RT buttons
-    int buttonInner = sqrt(-pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2) + pow(wheelRadius * 0.625, 2));
-    int buttonOuter = sqrt(-pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2) + pow(wheelRadius, 2));
-
+    float buttonProjection = -pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2);
+    int buttonInner = sqrt(buttonProjection + pow(wheelRadius * 0.625, 2));
+    int buttonOuter = sqrt(buttonProjection + pow(wheelRadius, 2));
+    // Finally place the buttons depending on the angle of the segment
     if (isnan(buttonInner) || abs(buttonInner) > NULL_VAL)
     {
         double r = wheelRadius * 0.8;
@@ -282,18 +295,4 @@ void DrawWheelSelection(void)
         DrawButton("LT", (int)(wheelCenter.x - buttonOuter), (int)segmentCenter.y, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
         DrawButton("RT", (int)(wheelCenter.x - buttonInner), (int)segmentCenter.y, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
     }
-}
-
-char *IntToString(int num)
-{
-    char *str = (char *)malloc(10 * sizeof(char));
-    sprintf(str, "%d", num);
-    return str;
-}
-
-char *FloatToString(float num)
-{
-    char *str = (char *)malloc(10 * sizeof(char));
-    sprintf(str, "%f", num);
-    return str;
 }
