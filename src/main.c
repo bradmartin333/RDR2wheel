@@ -38,6 +38,7 @@ static float segmentAngleSpan;
 static float halfUsedAngleSpan;
 static float startAngles[NUM_WHEEL_OPTIONS];
 static float endAngles[NUM_WHEEL_OPTIONS];
+static bool TEST = false;
 
 static void InitGame(void);        // Initialize game
 static void UpdateGame(void);      // Update game (one frame)
@@ -203,6 +204,10 @@ int ApplyButton(int button)
             headerSelection = (headerSelection + 1) % NUM_HEADER_OPTIONS;
             wheelSelection = NULL_VAL;
             break;
+        case GAMEPAD_BUTTON_LEFT_TRIGGER_2:
+        case GAMEPAD_BUTTON_RIGHT_TRIGGER_2:
+            TEST = !TEST;
+            break;
         default:
             break;
         }
@@ -276,7 +281,7 @@ void DrawWheelSelection(void)
     DrawRing(wheelCenter, wheelRadius * 0.95, wheelRadius, startAngle, endAngle, 100, Fade(MAROON, 0.8f));
     Vector2 segmentCenter = (Vector2){wheelCenter.x + cos(midAngle) * wheelRadius * 0.8,
                                       wheelCenter.y - sin(midAngle) * wheelRadius * 0.8};
-    GuiDrawIcon(ICON_AUDIO, segmentCenter.x - 24, segmentCenter.y - 24, 3, WHITE);
+    GuiDrawIcon(1 + (headerSelection * NUM_WHEEL_OPTIONS) + wheelSelection, segmentCenter.x - 24, segmentCenter.y - 24, 3, TEST ? GREEN : RED); // TESTING
     // Find the intersection of the line in the logical place for the LT/RT buttons
     float buttonProjection = -pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2);
     int buttonInner = sqrt(buttonProjection + pow(wheelRadius * 0.625, 2));
