@@ -7,21 +7,23 @@
 #include <emscripten/emscripten.h>
 #endif
 
+#define NULL_VAL 999
 #define NUM_HEADER_OPTIONS 3
+#define NUM_WHEEL_OPTIONS 8
 
 static const int screenWidth = 800;
 static const int screenHeight = 600;
 static const Vector2 center = {screenWidth / 2, screenHeight / 2};
 
-// Wheel
-static int numWheelOptions = 8;
-static const int wheelRadius = 225;
-static const Vector2 wheelCenter = {screenWidth / 2, screenHeight / 2 + 50};
-
 // Wheel header
 static const Rectangle wheelHeader = {screenWidth / 2 - 150, 25, 300, 75};
 static const char *headerOptions[NUM_HEADER_OPTIONS] = {"Camera", "Processing", "Tools"};
 static int headerSelection = 1;
+
+// Wheel
+static const int wheelRadius = 225;
+static const Vector2 wheelCenter = {screenWidth / 2, screenHeight / 2 + 50};
+static int wheelSelection = 0;
 
 static int framesCounter = 0;
 static Texture2D TestTex;
@@ -36,6 +38,8 @@ static void DrawHeader(void);
 static void DrawButton(const char *text, int posX, int posY, int button, int fontSize);
 static int ApplyButton(int button);
 static void DrawWheel(void);
+static  __attribute__ ((unused)) char *IntToString(int);
+static  __attribute__ ((unused)) char *FloatToString(float);
 
 int main(void)
 {
@@ -90,6 +94,7 @@ void DrawGame(void)
         else
         {
             DrawTexture(TestTex, 0, 0, WHITE);
+            wheelSelection = NULL_VAL;
         }
     }
     else
@@ -152,6 +157,7 @@ int ApplyButton(int button)
         {
         case GAMEPAD_BUTTON_RIGHT_TRIGGER_1:
             headerSelection = (headerSelection + 1) % NUM_HEADER_OPTIONS;
+            wheelSelection = NULL_VAL;
             break;
         default:
             break;
@@ -168,7 +174,7 @@ void DrawWheel(void)
     Vector2 rightStick = (Vector2){GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X), GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)};
     Vector2 rightStickWheel = (Vector2){wheelCenter.x + rightStick.x * wheelRadius, wheelCenter.y + rightStick.y * wheelRadius};
     float rightStickWheelMag = sqrt(pow(rightStickWheel.x - wheelCenter.x, 2) + pow(rightStickWheel.y - wheelCenter.y, 2));
-    float angle = 999.0;
+    float angle = NULL_VAL;
     if (rightStickWheelMag > wheelRadius * 0.9)
     {
         // Get the angle of the right stick vector with straight down as 0 degrees
@@ -176,19 +182,13 @@ void DrawWheel(void)
         angle = atan2(rightStick.y, rightStick.x) * 180 / PI - 90;
         if (angle < 0)
             angle += 360;
-        angle = abs(360 - angle);
+        angle = abs((int)(360 - angle));
     }
 
-    float segmentAngleSpan = 360.0 / numWheelOptions;
+    float segmentAngleSpan = 360.0 / NUM_WHEEL_OPTIONS;
     float halfUsedAngleSpan = (segmentAngleSpan - 2.0) / 2.0;
 
-    int buttonCenter = 0;
-    float buttonInner = 0;
-    float buttonOuter = 0;
-    float buttonStartAngle = 0;
-    float buttonEndAngle = 0;
-
-    for (int i = 0; i < numWheelOptions; i++)
+    for (int i = 0; i < NUM_WHEEL_OPTIONS; i++)
     {
         float startAngle = i * segmentAngleSpan - halfUsedAngleSpan;
         float endAngle = i * segmentAngleSpan + halfUsedAngleSpan;
@@ -197,47 +197,65 @@ void DrawWheel(void)
         // solve edge case crossing into quadrant 3 from quadrant 4
         if ((angle >= startAngle && angle <= endAngle) || (i == 0 && angle > 360.0 - halfUsedAngleSpan && angle <= 360.0))
         {
-            DrawRing(wheelCenter, wheelRadius * 0.95, wheelRadius, startAngle, endAngle, 100, Fade(MAROON, 0.8f));
-
-            float midAngle = (startAngle + endAngle - 180.0f) / 2.0;
-            // Get the Vector2 of the middle of the inner arc of the ring segment
-            Vector2 midPoint = (Vector2){wheelCenter.x + cos(midAngle * PI / 180.0) * wheelRadius * 0.6,
-                                         wheelCenter.y + sin(midAngle * PI / 180.0) * wheelRadius * 0.6};
-            // Get the Vector2 of the middle of the outer arc of the ring segment
-            Vector2 midPointOuter = (Vector2){wheelCenter.x + cos(midAngle * PI / 180.0) * wheelRadius,
-                                              wheelCenter.y + sin(midAngle * PI / 180.0) * wheelRadius};
-            // Reflect the vectors about the x axis
-            midPoint.y = wheelCenter.y - (midPoint.y - wheelCenter.y);
-            midPointOuter.y = wheelCenter.y - (midPointOuter.y - wheelCenter.y);
-            // Get midpoint between the points
-            Vector2 segmentCenter = (Vector2){(midPoint.x + midPointOuter.x) / 2.0, (midPoint.y + midPointOuter.y) / 2.0};
-            // Find the intersection of the line in the logical place for the LT/RT buttons
-            buttonCenter = (int)segmentCenter.y;
-            buttonInner = sqrt(-pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2) + pow(wheelRadius * 0.625, 2));
-            buttonOuter = sqrt(-pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2) + pow(wheelRadius, 2));
-            buttonStartAngle = startAngle;
-            buttonEndAngle = endAngle;
+            wheelSelection = i;
         }
     }
-    if (buttonCenter != 0) // Variables pushed out here so they are drawn on the top layer
+
+    if (wheelSelection != NULL_VAL)
     {
-        if (isnan(buttonInner))
+        float startAngle = wheelSelection * segmentAngleSpan - halfUsedAngleSpan;
+        float endAngle = wheelSelection * segmentAngleSpan + halfUsedAngleSpan;
+        DrawRing(wheelCenter, wheelRadius * 0.95, wheelRadius, startAngle, endAngle, 100, Fade(MAROON, 0.8f));
+
+        float midAngle = ((startAngle + endAngle - 180.0f) / 2.0) * PI / 180.0;
+        // Get the Vector2 of the middle of the inner arc of the ring segment
+        Vector2 midPoint = (Vector2){wheelCenter.x + cos(midAngle) * wheelRadius * 0.6,
+                                     wheelCenter.y + sin(midAngle) * wheelRadius * 0.6};
+        // Get the Vector2 of the middle of the outer arc of the ring segment
+        Vector2 midPointOuter = (Vector2){wheelCenter.x + cos(midAngle) * wheelRadius,
+                                          wheelCenter.y + sin(midAngle) * wheelRadius};
+        // Reflect the vectors about the x axis
+        midPoint.y = wheelCenter.y - (midPoint.y - wheelCenter.y);
+        midPointOuter.y = wheelCenter.y - (midPointOuter.y - wheelCenter.y);
+        // Get midpoint between the points
+        Vector2 segmentCenter = (Vector2){(midPoint.x + midPointOuter.x) / 2.0, (midPoint.y + midPointOuter.y) / 2.0};
+        // Find the intersection of the line in the logical place for the LT/RT buttons
+        int buttonInner = sqrt(-pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2) + pow(wheelRadius * 0.625, 2));
+        int buttonOuter = sqrt(-pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2) + pow(wheelRadius, 2));
+
+        if (isnan(buttonInner) || abs(buttonInner) > NULL_VAL)
         {
             double r = wheelRadius * 0.8;
-            DrawButton("LT", (int)(r * cos((buttonStartAngle + 90.0) * PI / 180.0) + wheelCenter.x),
-                       (int)(r * sin((buttonStartAngle + 90.0) * PI / 180.0) + wheelCenter.y), GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
-            DrawButton("RT", (int)(r * cos((buttonEndAngle + 90.0) * PI / 180.0) + wheelCenter.x),
-                       (int)(r * sin((buttonEndAngle + 90.0) * PI / 180.0) + wheelCenter.y), GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
+            float RTangle = (startAngle >= 0 && startAngle <= 180) ? startAngle : endAngle;
+            float LTangle = (startAngle >= 0 && startAngle <= 180) ? endAngle : startAngle;
+            DrawButton("LT", (int)(r * cos((RTangle + 90.0) * PI / 180.0) + wheelCenter.x),
+                       (int)(r * sin((RTangle + 90.0) * PI / 180.0) + wheelCenter.y), GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
+            DrawButton("RT", (int)(r * cos((LTangle + 90.0) * PI / 180.0) + wheelCenter.x),
+                       (int)(r * sin((LTangle + 90.0) * PI / 180.0) + wheelCenter.y), GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
         }
-        else if (angle >= 0 && angle <= 180)
+        else if (midAngle >= -PI / 2.0 && midAngle <= PI / 2.0)
         {
-            DrawButton("LT", (int)(wheelCenter.x + buttonInner), buttonCenter, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
-            DrawButton("RT", (int)(wheelCenter.x + buttonOuter), buttonCenter, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
+            DrawButton("LT", (int)(wheelCenter.x + buttonInner), (int)segmentCenter.y, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
+            DrawButton("RT", (int)(wheelCenter.x + buttonOuter), (int)segmentCenter.y, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
         }
         else
         {
-            DrawButton("LT", (int)(wheelCenter.x - buttonOuter), buttonCenter, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
-            DrawButton("RT", (int)(wheelCenter.x - buttonInner), buttonCenter, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
+            DrawButton("LT", (int)(wheelCenter.x - buttonOuter), (int)segmentCenter.y, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
+            DrawButton("RT", (int)(wheelCenter.x - buttonInner), (int)segmentCenter.y, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
         }
     }
+}
+
+char *IntToString(int num)
+{
+    char *str = (char *)malloc(10 * sizeof(char));
+    sprintf(str, "%d", num);
+    return str;
+}
+
+char *FloatToString(float num)
+{
+    char *str = (char *)malloc(10 * sizeof(char));
+    sprintf(str, "%f", num);
+    return str;
 }
