@@ -3,6 +3,11 @@
 #include <math.h>
 #include <raylib.h>
 
+#define RAYGUI_IMPLEMENTATION
+#define RAYGUI_CUSTOM_ICONS
+#include "iconset.h"
+#include "raygui.h"
+
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
@@ -112,6 +117,7 @@ void DrawGame(void)
 {
     BeginDrawing();
     ClearBackground(RAYWHITE);
+
     if (IsGamepadAvailable(0))
     {
         if (!IsMusicStreamPlaying(music))
@@ -136,6 +142,7 @@ void DrawGame(void)
     {
         DrawText("HELLO WASM", center.x - MeasureText("HELLO WASM", 20) / 2, center.y - 10, 20, GRAY);
     }
+
     EndDrawing();
 }
 
@@ -269,7 +276,7 @@ void DrawWheelSelection(void)
     DrawRing(wheelCenter, wheelRadius * 0.95, wheelRadius, startAngle, endAngle, 100, Fade(MAROON, 0.8f));
     Vector2 segmentCenter = (Vector2){wheelCenter.x + cos(midAngle) * wheelRadius * 0.8,
                                       wheelCenter.y - sin(midAngle) * wheelRadius * 0.8};
-    DrawCircleV(segmentCenter, 10, Fade(MAROON, 0.8f));
+    GuiDrawIcon(ICON_AUDIO, segmentCenter.x - 24, segmentCenter.y - 24, 3, WHITE);
     // Find the intersection of the line in the logical place for the LT/RT buttons
     float buttonProjection = -pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2);
     int buttonInner = sqrt(buttonProjection + pow(wheelRadius * 0.625, 2));
