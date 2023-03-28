@@ -5,7 +5,7 @@
 
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_CUSTOM_ICONS
-#include "iconset.h"
+#include "./resources/images/iconset.h"
 #include "raygui.h"
 
 #if defined(PLATFORM_WEB)
@@ -38,7 +38,70 @@ static float segmentAngleSpan;
 static float halfUsedAngleSpan;
 static float startAngles[NUM_WHEEL_OPTIONS];
 static float endAngles[NUM_WHEEL_OPTIONS];
-static bool TEST = false;
+static Vector2 segmentCenters[NUM_WHEEL_OPTIONS];
+int wheelOptions[NUM_HEADER_OPTIONS][NUM_WHEEL_OPTIONS][NUM_WHEEL_OPTIONS] = {
+    {
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+    },
+    {
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+    },
+    {
+        {ICON_AUDIO, ICON_LOWAUDIO, ICON_MUTE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_HELP, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+    }};
+Color wheelOptionColors[NUM_HEADER_OPTIONS][NUM_WHEEL_OPTIONS][NUM_WHEEL_OPTIONS] = {
+    {
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+    },
+    {
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+    },
+    {
+        {GREEN, YELLOW, RED, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+    }};
+int selectedWheelOptions[NUM_HEADER_OPTIONS][NUM_WHEEL_OPTIONS] = {{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}};
 
 static void InitGame(void);        // Initialize game
 static void UpdateGame(void);      // Update game (one frame)
@@ -48,8 +111,11 @@ static void UpdateDrawFrame(void); // Update and Draw (one frame)
 static void DrawHeader(void);
 static void DrawButton(const char *text, int posX, int posY, int button, int fontSize);
 static int ApplyButton(int button);
+static void ApplyRightStick(void);
 static void DrawWheel(void);
 static void DrawWheelSelection(void);
+static void IncrementWheelSelection(void);
+static void DecrementWheelSelection(void);
 
 char *IntToString(int num)
 {
@@ -97,6 +163,9 @@ void InitGame(void)
     {
         startAngles[i] = i * segmentAngleSpan - halfUsedAngleSpan;
         endAngles[i] = i * segmentAngleSpan + halfUsedAngleSpan;
+        float midAngle = (1 / 360.0) * PI * (startAngles[i] + endAngles[i] - 180.0);
+        segmentCenters[i] = (Vector2){wheelCenter.x + cos(midAngle) * wheelRadius * 0.8,
+                                      wheelCenter.y - sin(midAngle) * wheelRadius * 0.8};
     }
 
     // Generate the test textures
@@ -121,22 +190,28 @@ void DrawGame(void)
 
     if (IsGamepadAvailable(0))
     {
+        SetMusicVolume(music, 1.0 - selectedWheelOptions[2][0] / 2.0);
         if (!IsMusicStreamPlaying(music))
             PlayMusicStream(music);
         else
             UpdateMusicStream(music);
 
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1))
+            wheelSelection = NULL_VAL;
+
         if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1))
         {
             DrawTexture(GrayscaleTestTex, 0, 0, WHITE);
             DrawHeader();
+            ApplyRightStick();
             DrawWheel();
-            if (wheelSelection != NULL_VAL)
-                DrawWheelSelection();
+            DrawWheelSelection();
         }
         else
         {
             DrawTexture(TestTex, 0, 0, WHITE);
+            if (headerSelection == 2 && wheelSelection == 1) // TESTING
+                DrawText("You can do it!", center.x - MeasureText("You can do it!", 70) / 2, center.y - 35, 70, GREEN);
         }
     }
     else
@@ -204,9 +279,13 @@ int ApplyButton(int button)
             headerSelection = (headerSelection + 1) % NUM_HEADER_OPTIONS;
             wheelSelection = NULL_VAL;
             break;
-        case GAMEPAD_BUTTON_LEFT_TRIGGER_2:
         case GAMEPAD_BUTTON_RIGHT_TRIGGER_2:
-            TEST = !TEST;
+            IncrementWheelSelection();
+            framesCounter = 0;
+            break;
+        case GAMEPAD_BUTTON_LEFT_TRIGGER_2:
+            DecrementWheelSelection();
+            framesCounter = 0;
             break;
         default:
             break;
@@ -215,75 +294,65 @@ int ApplyButton(int button)
     return buttonPressed ? 1 : 0;
 }
 
-void DrawWheel(void)
+void ApplyRightStick(void)
 {
-    DrawCircleV(wheelCenter, wheelRadius * 0.57, Fade(BLACK, 0.5f));
-
     // Determine if the rightStickWheel vector is greater than the ring radius * 0.99
     Vector2 rightStick = (Vector2){GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X), GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)};
     Vector2 rightStickWheel = (Vector2){wheelCenter.x + rightStick.x * wheelRadius, wheelCenter.y + rightStick.y * wheelRadius};
     float rightStickWheelMag = sqrt(pow(rightStickWheel.x - wheelCenter.x, 2) + pow(rightStickWheel.y - wheelCenter.y, 2));
 
-    float angle = NULL_VAL;
-    if (rightStickWheelMag > wheelRadius * 0.25) // User is trying to do something
+    if (rightStickWheelMag > wheelRadius * 0.99) // User is selecting a segment
     {
-        // Get the angle of the right stick vector with straight down as 0 degrees
-        // and straight right as 90 degrees
-        angle = atan2(rightStick.y, rightStick.x) * 180 / PI - 90;
+        float angle = atan2(rightStick.y, rightStick.x) * 180 / PI - 90;
         if (angle < 0)
             angle += 360;
         angle = abs((int)(360 - angle));
-    }
 
-    if (rightStickWheelMag > wheelRadius * 0.99) // User is selecting a segment
-    {
         for (int i = 0; i < NUM_WHEEL_OPTIONS; i++)
         {
             // Determine if the angle points towards the ring segement being drawn and
             // solve edge case crossing quadrant 4 -> quadrant 3
             if ((angle >= startAngles[i] && angle <= endAngles[i]) ||
                 (i == 0 && angle > 360.0 - halfUsedAngleSpan && angle <= 360.0))
+            {
                 wheelSelection = i;
+                framesCounter = 0;
+            }
         }
     }
-    else if (rightStickWheelMag > wheelRadius * 0.35 && wheelSelection != NULL_VAL)
-    {
-        // User is trying to deselect, convert to radians for simplicity
-        angle *= PI / 180.0;
-        // Determine the opposite start and end angles of the currently selected ring segment in radians
-        float startAngle = ((wheelSelection * segmentAngleSpan - halfUsedAngleSpan) - 180) * PI / 180.0;
-        float endAngle = ((wheelSelection * segmentAngleSpan + halfUsedAngleSpan) - 180) * PI / 180.0;
-        // Normalize the angles
-        if (startAngle < 0)
-            startAngle += 2 * PI;
-        if (endAngle < 0)
-            endAngle += 2 * PI;
-        // Determine if the angle points towards the ring segement being drawn and
-        // solve edge case of crossing quadrant 1,2 -> quadrant 3,4
-        if ((endAngle > angle && angle > startAngle) ||
-            (wheelSelection == NUM_WHEEL_OPTIONS / 2 && endAngle > angle && angle < startAngle && rightStick.y > 0))
-            wheelSelection = NULL_VAL;
-    }
+}
 
-    // Draw the segments
-    for (int i = 0; i < NUM_WHEEL_OPTIONS; i++)
+void DrawWheel(void)
+{
+    DrawCircleV(wheelCenter, wheelRadius * 0.57, Fade(BLACK, 0.5f)); // Draw the background
+    for (int i = 0; i < NUM_WHEEL_OPTIONS; i++)                      // Draw the segments
     {
         DrawRing(wheelCenter, wheelRadius * 0.6, wheelRadius, startAngles[i], endAngles[i], 100, Fade(BLACK, 0.8f));
+        GuiDrawIcon(wheelOptions[headerSelection][i][selectedWheelOptions[headerSelection][i]],
+                    segmentCenters[i].x - 24, segmentCenters[i].y - 24, 3,
+                    wheelOptionColors[headerSelection][i][selectedWheelOptions[headerSelection][i]]);
+    }
+    if (wheelSelection != NULL_VAL) // Determine if the user is not doing anything
+    {
+        framesCounter++;
+        if (framesCounter > GetFPS() * 1.5)
+            wheelSelection = NULL_VAL;
     }
 }
 
 void DrawWheelSelection(void)
 {
-    // Determine the start and end angles of the ring segment and draw it
+    if (wheelSelection == NULL_VAL || wheelOptions[headerSelection][wheelSelection][0] == ICON_NONE)
+        return;
     float startAngle = startAngles[wheelSelection];
     float endAngle = endAngles[wheelSelection];
-    float midAngle = (1 / 360.0) * PI * (startAngle + endAngle - 180.0);
+    Vector2 center = segmentCenters[wheelSelection];
     DrawRing(wheelCenter, wheelRadius * 0.95, wheelRadius, startAngle, endAngle, 100, Fade(MAROON, 0.8f));
-    Vector2 segmentCenter = (Vector2){wheelCenter.x + cos(midAngle) * wheelRadius * 0.8,
-                                      wheelCenter.y - sin(midAngle) * wheelRadius * 0.8};
-    GuiDrawIcon(1 + (headerSelection * NUM_WHEEL_OPTIONS) + wheelSelection, segmentCenter.x - 24, segmentCenter.y - 24, 3, TEST ? GREEN : RED); // TESTING
+    // Not a scrollable option, so don't activate trigger buttons
+    if (wheelOptions[headerSelection][wheelSelection][1] == ICON_NONE)
+        return;
     // Find the intersection of the line in the logical place for the LT/RT buttons
-    float buttonProjection = -pow(segmentCenter.y, 2) + 2 * segmentCenter.y * wheelCenter.y - pow(wheelCenter.y, 2);
+    float buttonProjection = -pow(center.y, 2) + 2 * center.y * wheelCenter.y - pow(wheelCenter.y, 2);
     int buttonInner = sqrt(buttonProjection + pow(wheelRadius * 0.625, 2));
     int buttonOuter = sqrt(buttonProjection + pow(wheelRadius, 2));
     // Finally place the buttons depending on the angle of the segment
@@ -297,14 +366,45 @@ void DrawWheelSelection(void)
         DrawButton("RT", (int)(r * cos((LTangle + 90.0) * PI / 180.0) + wheelCenter.x),
                    (int)(r * sin((LTangle + 90.0) * PI / 180.0) + wheelCenter.y), GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
     }
-    else if (midAngle >= -PI / 2.0 && midAngle <= PI / 2.0)
+    else if (center.x > wheelCenter.x)
     {
-        DrawButton("LT", (int)(wheelCenter.x + buttonInner), (int)segmentCenter.y, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
-        DrawButton("RT", (int)(wheelCenter.x + buttonOuter), (int)segmentCenter.y, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
+        DrawButton("LT", (int)(wheelCenter.x + buttonInner), (int)center.y, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
+        DrawButton("RT", (int)(wheelCenter.x + buttonOuter), (int)center.y, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
     }
     else
     {
-        DrawButton("LT", (int)(wheelCenter.x - buttonOuter), (int)segmentCenter.y, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
-        DrawButton("RT", (int)(wheelCenter.x - buttonInner), (int)segmentCenter.y, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
+        DrawButton("LT", (int)(wheelCenter.x - buttonOuter), (int)center.y, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
+        DrawButton("RT", (int)(wheelCenter.x - buttonInner), (int)center.y, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
     }
+}
+
+void IncrementWheelSelection(void)
+{
+    int s = selectedWheelOptions[headerSelection][wheelSelection] + 1;
+    if (s >= NUM_WHEEL_OPTIONS)
+        s = 0;
+    while (wheelOptions[headerSelection][wheelSelection][s] == ICON_NONE)
+    {
+        s++;
+        if (s == NUM_WHEEL_OPTIONS)
+        {
+            s = 0;
+            break;
+        }
+    }
+    selectedWheelOptions[headerSelection][wheelSelection] = s;
+}
+
+void DecrementWheelSelection(void)
+{
+    int s = selectedWheelOptions[headerSelection][wheelSelection] - 1;
+    if (s < 0)
+        s = NUM_WHEEL_OPTIONS - 1;
+    while (wheelOptions[headerSelection][wheelSelection][s] == ICON_NONE)
+    {
+        s--;
+        if (s == 0)
+            break;
+    }
+    selectedWheelOptions[headerSelection][wheelSelection] = s;
 }
