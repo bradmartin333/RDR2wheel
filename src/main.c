@@ -39,7 +39,69 @@ static float halfUsedAngleSpan;
 static float startAngles[NUM_WHEEL_OPTIONS];
 static float endAngles[NUM_WHEEL_OPTIONS];
 static Vector2 segmentCenters[NUM_WHEEL_OPTIONS];
-static bool TEST = false;
+int wheelOptions[NUM_HEADER_OPTIONS][NUM_WHEEL_OPTIONS][NUM_WHEEL_OPTIONS] = {
+    {
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+    },
+    {
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+    },
+    {
+        {ICON_AUDIO, ICON_LOWAUDIO, ICON_MUTE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+    }};
+Color wheelOptionColors[NUM_HEADER_OPTIONS][NUM_WHEEL_OPTIONS][NUM_WHEEL_OPTIONS] = {
+    {
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+    },
+    {
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+    },
+    {
+        {GREEN, YELLOW, RED, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
+    }};
+int selectedWheelOptions[NUM_HEADER_OPTIONS][NUM_WHEEL_OPTIONS] = {{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}};
 
 static void InitGame(void);        // Initialize game
 static void UpdateGame(void);      // Update game (one frame)
@@ -52,6 +114,9 @@ static int ApplyButton(int button);
 static void ApplyRightStick(void);
 static void DrawWheel(void);
 static void DrawWheelSelection(void);
+static void IncrementWheelSelection(void);
+static void DecrementWheelSelection(void);
+static void ApplyVolumeSetting(void);
 
 char *IntToString(int num)
 {
@@ -126,6 +191,7 @@ void DrawGame(void)
 
     if (IsGamepadAvailable(0))
     {
+        ApplyVolumeSetting();
         if (!IsMusicStreamPlaying(music))
             PlayMusicStream(music);
         else
@@ -210,9 +276,12 @@ int ApplyButton(int button)
             headerSelection = (headerSelection + 1) % NUM_HEADER_OPTIONS;
             wheelSelection = NULL_VAL;
             break;
-        case GAMEPAD_BUTTON_LEFT_TRIGGER_2:
         case GAMEPAD_BUTTON_RIGHT_TRIGGER_2:
-            TEST = !TEST;
+            IncrementWheelSelection();
+            framesCounter = 0;
+            break;
+        case GAMEPAD_BUTTON_LEFT_TRIGGER_2:
+            DecrementWheelSelection();
             framesCounter = 0;
             break;
         default:
@@ -256,9 +325,11 @@ void DrawWheel(void)
     for (int i = 0; i < NUM_WHEEL_OPTIONS; i++)                      // Draw the segments
     {
         DrawRing(wheelCenter, wheelRadius * 0.6, wheelRadius, startAngles[i], endAngles[i], 100, Fade(BLACK, 0.8f));
-        GuiDrawIcon(1 + (headerSelection * NUM_WHEEL_OPTIONS) + i, segmentCenters[i].x - 24, segmentCenters[i].y - 24, 3, TEST ? GREEN : RED); // TESTING
+        GuiDrawIcon(wheelOptions[headerSelection][i][selectedWheelOptions[headerSelection][i]],
+                    segmentCenters[i].x - 24, segmentCenters[i].y - 24, 3,
+                    wheelOptionColors[headerSelection][i][selectedWheelOptions[headerSelection][i]]);
     }
-    if (wheelSelection != NULL_VAL) // Determine if the user is stalling
+    if (wheelSelection != NULL_VAL) // Determine if the user is not doing anything
     {
         framesCounter++;
         if (framesCounter > GetFPS() * 1.5)
@@ -299,4 +370,41 @@ void DrawWheelSelection(void)
         DrawButton("LT", (int)(wheelCenter.x - buttonOuter), (int)center.y, GAMEPAD_BUTTON_LEFT_TRIGGER_2, 10);
         DrawButton("RT", (int)(wheelCenter.x - buttonInner), (int)center.y, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, 10);
     }
+}
+
+void IncrementWheelSelection(void)
+{
+    int s = selectedWheelOptions[headerSelection][wheelSelection] + 1;
+    if (s >= NUM_WHEEL_OPTIONS)
+        s = 0;
+    while (wheelOptions[headerSelection][wheelSelection][s] == ICON_NONE)
+    {
+        s++;
+        if (s == NUM_WHEEL_OPTIONS)
+        {
+            s = 0;
+            break;
+        }
+    }
+    selectedWheelOptions[headerSelection][wheelSelection] = s;
+}
+
+void DecrementWheelSelection(void)
+{
+    int s = selectedWheelOptions[headerSelection][wheelSelection] - 1;
+    if (s < 0)
+        s = NUM_WHEEL_OPTIONS - 1;
+    while (wheelOptions[headerSelection][wheelSelection][s] == ICON_NONE)
+    {
+        s--;
+        if (s == 0)
+            break;
+    }
+    selectedWheelOptions[headerSelection][wheelSelection] = s;
+}
+
+void ApplyVolumeSetting(void)
+{
+    float setting = 1.0 - selectedWheelOptions[2][0] / 2.0;
+    SetMusicVolume(music, setting);
 }
