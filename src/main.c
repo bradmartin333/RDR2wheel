@@ -62,7 +62,7 @@ int wheelOptions[NUM_HEADER_OPTIONS][NUM_WHEEL_OPTIONS][NUM_WHEEL_OPTIONS] = {
     },
     {
         {ICON_AUDIO, ICON_LOWAUDIO, ICON_MUTE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
+        {ICON_HELP, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
         {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
         {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
         {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
@@ -116,7 +116,6 @@ static void DrawWheel(void);
 static void DrawWheelSelection(void);
 static void IncrementWheelSelection(void);
 static void DecrementWheelSelection(void);
-static void ApplyVolumeSetting(void);
 
 char *IntToString(int num)
 {
@@ -191,11 +190,14 @@ void DrawGame(void)
 
     if (IsGamepadAvailable(0))
     {
-        ApplyVolumeSetting();
+        SetMusicVolume(music, 1.0 - selectedWheelOptions[2][0] / 2.0);
         if (!IsMusicStreamPlaying(music))
             PlayMusicStream(music);
         else
             UpdateMusicStream(music);
+
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1))
+            wheelSelection = NULL_VAL;
 
         if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1))
         {
@@ -208,7 +210,8 @@ void DrawGame(void)
         else
         {
             DrawTexture(TestTex, 0, 0, WHITE);
-            wheelSelection = NULL_VAL;
+            if (headerSelection == 2 && wheelSelection == 1) // TESTING
+                DrawText("You can do it!", center.x - MeasureText("You can do it!", 70) / 2, center.y - 35, 70, GREEN);
         }
     }
     else
@@ -339,12 +342,15 @@ void DrawWheel(void)
 
 void DrawWheelSelection(void)
 {
-    if (wheelSelection == NULL_VAL)
+    if (wheelSelection == NULL_VAL || wheelOptions[headerSelection][wheelSelection][0] == ICON_NONE)
         return;
     float startAngle = startAngles[wheelSelection];
     float endAngle = endAngles[wheelSelection];
     Vector2 center = segmentCenters[wheelSelection];
     DrawRing(wheelCenter, wheelRadius * 0.95, wheelRadius, startAngle, endAngle, 100, Fade(MAROON, 0.8f));
+    // Not a scrollable option, so don't activate trigger buttons
+    if (wheelOptions[headerSelection][wheelSelection][1] == ICON_NONE)
+        return;
     // Find the intersection of the line in the logical place for the LT/RT buttons
     float buttonProjection = -pow(center.y, 2) + 2 * center.y * wheelCenter.y - pow(wheelCenter.y, 2);
     int buttonInner = sqrt(buttonProjection + pow(wheelRadius * 0.625, 2));
@@ -401,10 +407,4 @@ void DecrementWheelSelection(void)
             break;
     }
     selectedWheelOptions[headerSelection][wheelSelection] = s;
-}
-
-void ApplyVolumeSetting(void)
-{
-    float setting = 1.0 - selectedWheelOptions[2][0] / 2.0;
-    SetMusicVolume(music, setting);
 }
