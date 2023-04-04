@@ -14,7 +14,7 @@ There are great tutorials for getting setup with Raylib and emscripten
 - [emscripten on Windows](https://www.youtube.com/watch?v=j6akryezlzc)
 
 Then, download [`raygui.h`](https://github.com/raysan5/raygui/releases) and move it to `C:\raylib\raylib\src`.  
-If using VS Code, add `"C:/raylib/raylib/src/**"` to the C include paths.
+If using VS Code, add `"C:/raylib/raylib/src/**"` to the C include paths as seen in the `.vscode` directory.
 
 ## Usage/Examples
 
