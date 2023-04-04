@@ -13,6 +13,9 @@ There are great tutorials for getting setup with Raylib and emscripten
 - [Raylib on Windows](https://www.youtube.com/watch?v=-F6THkPkF2I)
 - [emscripten on Windows](https://www.youtube.com/watch?v=j6akryezlzc)
 
+Then, download [`raygui.h`](https://github.com/raysan5/raygui/releases) and move it to `C:\raylib\raylib\src`.  
+If using VS Code, add `"C:/raylib/raylib/src/**"` to the C include paths.
+
 ## Usage/Examples
 
 The `.py` in the root of this repository builds the `main.c` file in the specified directory and outputs an `.html` with WASM assets. So far, I have been using it like this:
