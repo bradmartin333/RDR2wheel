@@ -3,138 +3,16 @@
 #include <math.h>
 #include <raylib.h>
 
-#define RAYGUI_IMPLEMENTATION
-#define RAYGUI_CUSTOM_ICONS
-#include "./resources/images/iconset.h"
-#include <raygui.h>
+#include "./gamevars.h"
+#include "./functions.h"
 
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
 
-#define NULL_VAL 999
-#define NUM_HEADER_OPTIONS 3
-#define NUM_WHEEL_OPTIONS 8
-
-// Game environment
-static const char* startText = "Press any button on gamepad to begin\n   Click game window to enable music";
-static const int screenWidth = 800;
-static const int screenHeight = 600;
-static const Vector2 center = {screenWidth / 2, screenHeight / 2};
-static int framesCounter = 0;
-static Texture2D testTex;
-static Texture2D grayscaleTestTex;
-static Music music;
-
-// Wheel header
-static const Rectangle wheelHeader = {screenWidth / 2 - 150, 25, 300, 75};
-static const char *headerOptions[NUM_HEADER_OPTIONS] = {"Camera", "Processing", "Tools"};
-static int headerSelection = 1;
-
-// Wheel
-static const int wheelRadius = 225;
-static const Vector2 wheelCenter = {screenWidth / 2, screenHeight / 2 + 50};
-static int wheelSelection = NULL_VAL;
-static float segmentAngleSpan;
-static float halfUsedAngleSpan;
-static float startAngles[NUM_WHEEL_OPTIONS];
-static float endAngles[NUM_WHEEL_OPTIONS];
-static Vector2 segmentCenters[NUM_WHEEL_OPTIONS];
-unsigned char wheelOptions[NUM_HEADER_OPTIONS][NUM_WHEEL_OPTIONS][NUM_WHEEL_OPTIONS] = {
-    {
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-    },
-    {
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-    },
-    {
-        {ICON_AUDIO, ICON_LOWAUDIO, ICON_MUTE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_HELP, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-        {ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE, ICON_NONE},
-    }};
-Color wheelOptionColors[NUM_HEADER_OPTIONS][NUM_WHEEL_OPTIONS][NUM_WHEEL_OPTIONS] = {
-    {
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-    },
-    {
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-    },
-    {
-        {GREEN, YELLOW, RED, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-        {WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE},
-    }};
-int selectedWheelOptions[NUM_HEADER_OPTIONS][NUM_WHEEL_OPTIONS] = {{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}};
-
-static void InitGame(void);        // Initialize game
-static void UpdateGame(void);      // Update game (one frame)
-static void DrawGame(void);        // Draw game (one frame)
-static void UnloadGame(void);      // Unload game
-static void UpdateDrawFrame(void); // Update and Draw (one frame)
-static void DrawHeader(void);
-static void DrawButton(const char *text, int posX, int posY, int button, int fontSize);
-static int ApplyButton(int button);
-static void ApplyRightStick(void);
-static void DrawWheel(void);
-static void DrawWheelSelection(void);
-static void IncrementWheelSelection(void);
-static void DecrementWheelSelection(void);
-
-char *IntToString(int num)
-{
-    char *str = (char *)malloc(10 * sizeof(char));
-    sprintf(str, "%d", num);
-    return str;
-}
-
-char *FloatToString(float num)
-{
-    char *str = (char *)malloc(10 * sizeof(char));
-    sprintf(str, "%f", num);
-    return str;
-}
-
 int main(void)
 {
-    SetConfigFlags(FLAG_MSAA_4X_HINT|FLAG_VSYNC_HINT);
+    SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
     InitWindow(screenWidth, screenHeight, "RDR2 Wheel");
     InitGame();
     InitAudioDevice();
@@ -331,7 +209,7 @@ void DrawWheel(void)
     DrawCircleV(wheelCenter, wheelRadius * 0.57, Fade(BLACK, 0.5f)); // Draw the background
     DrawLineV((Vector2){wheelCenter.x - 90, wheelCenter.y - 50}, (Vector2){wheelCenter.x + 90, wheelCenter.y - 50}, WHITE);
     DrawLineV((Vector2){wheelCenter.x - 90, wheelCenter.y + 50}, (Vector2){wheelCenter.x + 90, wheelCenter.y + 50}, WHITE);
-    for (int i = 0; i < NUM_WHEEL_OPTIONS; i++)                      // Draw the segments
+    for (int i = 0; i < NUM_WHEEL_OPTIONS; i++) // Draw the segments
     {
         DrawRing(wheelCenter, wheelRadius * 0.6, wheelRadius, startAngles[i], endAngles[i], 100, Fade(BLACK, 0.8f));
         GuiDrawIcon(wheelOptions[headerSelection][i][selectedWheelOptions[headerSelection][i]],
@@ -348,11 +226,14 @@ void DrawWheel(void)
 
 void DrawWheelSelection(void)
 {
-    if (wheelSelection == NULL_VAL || wheelOptions[headerSelection][wheelSelection][0] == ICON_NONE) {
+    if (wheelSelection == NULL_VAL || wheelOptions[headerSelection][wheelSelection][0] == ICON_NONE)
+    {
         DrawText(" Move RS to\nselect a tool", wheelCenter.x - MeasureText(" Move RS to\nselect a tool", 20) / 2, wheelCenter.y + 60, 20, WHITE);
         return;
     }
     // Write the name and description of the selected tool
+    char *thisToolString = toolStrings[wheelOptions[headerSelection][wheelSelection][selectedWheelOptions[headerSelection][wheelSelection]]];
+    DrawText(thisToolString, wheelCenter.x - MeasureText(thisToolString, 24) / 2, wheelCenter.y - 88, 24, WHITE);
     DrawText("Release LB to\n  apply tool", wheelCenter.x - MeasureText("Release LB to\n  apply tool", 20) / 2, wheelCenter.y + 60, 20, WHITE);
 
     float startAngle = startAngles[wheelSelection];
