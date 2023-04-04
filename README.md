@@ -4,14 +4,15 @@ The Red Dead Redeption 2 wheel HUD is a great way to replace typical mouse and k
 
 ![RDR2](https://miro.medium.com/v2/resize:fit:640/format:webp/1*KObw_YewVr50ABFDDv7srA.jpeg)
 
-https://user-images.githubusercontent.com/19335151/228061738-69fb8b9b-2538-47f4-b526-122e78a07345.mp4
-
 ## Installation
 
 There are great tutorials for getting setup with Raylib and emscripten
 
 - [Raylib on Windows](https://www.youtube.com/watch?v=-F6THkPkF2I)
 - [emscripten on Windows](https://www.youtube.com/watch?v=j6akryezlzc)
+
+Then, download [`raygui.h`](https://github.com/raysan5/raygui/releases) and move it to `C:\raylib\raylib\src`.  
+If using VS Code, add `"C:/raylib/raylib/src/**"` to the C include paths as seen in the `.vscode` directory.
 
 ## Usage/Examples
 

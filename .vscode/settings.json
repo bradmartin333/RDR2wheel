@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "raylib.h": "c"
+        "raylib.h": "c",
+        "iconset.h": "c",
+        "gamevars.h": "c",
+        "functions.h": "c"
     }
 }
