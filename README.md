@@ -1,6 +1,6 @@
 # RDR2wheel
 
-The Red Dead Redeption 2 wheel HUD is a great way to replace typical mouse and keyboard graphical user interactions. Since Raylib makes using a gamepad extremely easy and I typically make button-heavy GUIs, the goal here is to create a user-friendly template to add the selector wheel to a Raylib project.  
+The Red Dead Redemption 2 wheel HUD is a great way to replace typical mouse and keyboard graphical user interactions. Since Raylib makes using a gamepad extremely easy and I typically make button-heavy GUIs, the goal here is to create a user-friendly template to add the selector wheel to a Raylib project.  
 
 ![RDR2](https://miro.medium.com/v2/resize:fit:640/format:webp/1*KObw_YewVr50ABFDDv7srA.jpeg)
 
